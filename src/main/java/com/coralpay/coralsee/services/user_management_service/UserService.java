@@ -6,6 +6,6 @@ import com.coralpay.coralsee.exceptions.RegistrationException.UserAlreadyExistsE
 
 public interface UserService {
     UserResponse getUserBy(Long id);
-    UserResponse getUserBy(String username);
+    UserResponse getUserBy(String emailAddress);
     UserResponse createUserAccount(SignupRequest signupRequest) throws UserAlreadyExistsException;
 }

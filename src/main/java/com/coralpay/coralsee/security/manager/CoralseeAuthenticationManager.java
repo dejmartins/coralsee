@@ -27,4 +27,5 @@ public class CoralseeAuthenticationManager implements AuthenticationManager {
                 .findAny()
                 .orElseThrow(() -> new ProviderNotFoundException(AUTH_PROVIDER_NOT_FOUND));
     }
+
 }

@@ -1,6 +1,6 @@
 package com.coralpay.coralsee.dtos.requests;
 
-import com.coralpay.coralsee.annontations.ValidEmailAddress;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,7 +14,7 @@ public class SignupRequest {
     private String password;
     @NotBlank(message = "Phone number cannot be blank")
     private String phoneNumber;
-    @ValidEmailAddress
+    @Email(message = "Invalid Email Format")
     @NotBlank(message = "Email cannot be blank")
     private String emailAddress;
 }

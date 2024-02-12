@@ -6,6 +6,7 @@ import com.coralpay.coralsee.entities.User;
 import com.coralpay.coralsee.enums.Authority;
 import com.coralpay.coralsee.exceptions.RegistrationException.UserAlreadyExistsException;
 import com.coralpay.coralsee.repositories.UserRepository;
+import com.coralpay.coralsee.security.entities.SecureUser;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.Set;
 
 import static com.coralpay.coralsee.utils.Constants.USER_ALREADY_EXIST;
+import static com.coralpay.coralsee.utils.Constants.USER_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -31,8 +33,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public UserResponse getUserBy(String username) {
-        return null;
+    public UserResponse getUserBy(String emailAddress) {
+        return modelMapper.map(getUserByUsername(emailAddress), UserResponse.class);
     }
 
     @Override
@@ -54,6 +56,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return null;
+        return new SecureUser(getUserByUsername(username));
+    }
+
+    private User getUserByUsername(String emailAddress){
+        return userRepository.findByEmailAddress(emailAddress)
+                .orElseThrow(() -> new UsernameNotFoundException(USER_NOT_FOUND));
     }
 }

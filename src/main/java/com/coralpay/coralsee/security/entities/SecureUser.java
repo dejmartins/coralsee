@@ -1,6 +1,7 @@
 package com.coralpay.coralsee.security.entities;
 
 import com.coralpay.coralsee.entities.User;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -11,7 +12,7 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 @Getter
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class SecureUser implements UserDetails {
 
     private final User user;

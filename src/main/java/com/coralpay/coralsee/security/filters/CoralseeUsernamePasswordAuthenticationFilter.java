@@ -31,7 +31,7 @@ public class CoralseeUsernamePasswordAuthenticationFilter extends UsernamePasswo
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         try {
             LoginRequest loginRequest = mapper.readValue(request.getInputStream(), LoginRequest.class);
-            Authentication authentication = new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword());
+            Authentication authentication = new UsernamePasswordAuthenticationToken(loginRequest.getEmailAddress(), loginRequest.getPassword());
             Authentication authenticationResult = authenticationManager.authenticate(authentication);
             SecurityContextHolder.getContext().setAuthentication(authenticationResult);
             return authenticationResult;

@@ -6,4 +6,5 @@ public class Constants {
     public static final String BAD_CREDENTIALS = "Incorrect email address or password supplied";
     public static final String AUTH_PROVIDER_NOT_FOUND = "No authentication provider exists for authentication type";
     public static final String USER_ALREADY_EXIST = "User already exists";
+    public static final String USER_NOT_FOUND = "Invalid authentication credentials";
 }

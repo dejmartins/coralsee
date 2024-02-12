@@ -14,14 +14,12 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.util.Set;
 
-import static com.coralpay.coralsee.enums.Authority.USER;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 @Configuration
@@ -29,16 +27,12 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 public class SecurityConfig {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final PasswordEncoder passwordEncoder;
 
     @Bean
     public AuthenticationManager authenticationManager(){
-        Set<AuthenticationProvider> providers = Set.of(new CoralseeUsernamePasswordAuthenticationProvider(userDetailsService, passwordEncoder()));
+        Set<AuthenticationProvider> providers = Set.of(new CoralseeUsernamePasswordAuthenticationProvider(userDetailsService, passwordEncoder));
         return new CoralseeAuthenticationManager(providers);
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder(){
-        return new BCryptPasswordEncoder();
     }
 
     @Bean
@@ -49,9 +43,9 @@ public class SecurityConfig {
                 .addFilterAt(new CoralseeUsernamePasswordAuthenticationFilter(authenticationManager(), jwtService),
                         UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new JwtAuthorizationFilter(jwtService), CoralseeUsernamePasswordAuthenticationFilter.class)
-                .authorizeHttpRequests(c->c.requestMatchers("/login").permitAll())
-                .authorizeHttpRequests(c->c.requestMatchers("/api/v1/pay").hasAnyAuthority(USER.name()))
-                .authorizeHttpRequests(c->c.anyRequest().authenticated())
+                .authorizeHttpRequests(c -> c.requestMatchers("/login", "/api/v1/signup").permitAll())
+//                .authorizeHttpRequests(c->c.requestMatchers("/api/v1/pay").hasAnyAuthority(USER.name()))
+                .authorizeHttpRequests(c -> c.anyRequest().authenticated())
                 .build();
     }
 }

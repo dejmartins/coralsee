@@ -1,17 +1,17 @@
 package com.coralpay.coralsee.dtos.requests;
 
-import com.coralpay.coralsee.annontations.ValidEmailAddress;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+//@NoArgsConstructor
 public class LoginRequest {
-    @ValidEmailAddress
+    @Email(message = "Invalid Email Format")
     @NotBlank(message = "Email cannot be blank")
-    private String email;
+    private String emailAddress;
     @NotBlank(message = "Password cannot be blank")
     private String password;
 }
