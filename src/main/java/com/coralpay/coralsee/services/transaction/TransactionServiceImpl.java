@@ -13,6 +13,7 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,16 +22,19 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.coralpay.coralsee.validators.TransactionValidator.validateCreateTransactionRequest;
+import static org.hibernate.cfg.JdbcSettings.ISOLATION;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService{
@@ -41,32 +45,47 @@ public class TransactionServiceImpl implements TransactionService{
     public final UserService userService;
     public final TransactionRepository transactionRepository;
 
+
+    @Transactional
     @Override
     public TransactionResponse createTransaction(CreateTransactionRequest transactionRequest) throws InvalidTransactionDetailException, IOException {
         validateCreateTransactionRequest(transactionRequest);
+
+        log.info("Creating a new transaction for Coralsee user: {}", transactionRequest.getEmailAddress());
 
         Transaction transaction = new Transaction();
         transaction.setAmountPaid(transactionRequest.getAmountPaid());
         transaction.setUser(getUser(transactionRequest.getEmailAddress()));
         transaction.setPaidAt(LocalDateTime.now());
-        transaction.setUsdValue(getUsdValue());
 
-        System.out.println((getUsdValue()));
+        BigDecimal usdValue = getUsdValue();
+        transaction.setUsdValue(usdValue.toString());
+
+        log.info("USD value retrieved for the transaction: {}", usdValue);
 
         Transaction savedTransaction = transactionRepository.save(transaction);
+
+        log.info("Transaction created successfully. ID: {}", savedTransaction.getId());
 
         return getTransactionResponseOf(savedTransaction);
     }
 
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     @Override
     public TransactionSummaryResponse getWeekToDateSummary(String userId, int number, int size) {
-        Pageable pageable = PageRequest.of(number, size, Sort.Direction.DESC, "paidAt");
+        Pageable pageable = PageRequest.of(number, size, Sort.Direction.ASC, "paidAt");
 
         LocalDateTime startDate = LocalDateTime.now().minusWeeks(1);
         Page<Transaction> transactionPage = transactionRepository.findWeekToDateTransactions(userId, startDate, pageable);
 
         List<TransactionResponse> responses = transactionPage.getContent()
-                .stream().map(this::getTransactionResponseOf).toList();
+                .stream().map(transaction -> {
+                    try {
+                        return getTransactionResponseWithGainOrLoss(transaction);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }).toList();
 
         TransactionSummaryResponse transactions = TransactionSummaryResponse.builder()
                 .requestedAt(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
@@ -76,7 +95,7 @@ public class TransactionServiceImpl implements TransactionService{
         return transactions;
     }
 
-    private String getUsdValue() throws IOException {
+    private BigDecimal getUsdValue() throws IOException {
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
                 .url(exhangeRateApi)
@@ -89,6 +108,7 @@ public class TransactionServiceImpl implements TransactionService{
         JSONObject jsonResponseBody = new JSONObject(responseBody);
 
         if (!response.isSuccessful()) {
+            log.error("Failed to fetch exchange rates. Response: {}", responseBody);
             throw new IOException(jsonResponseBody.getString("responseMessage"));
         }
 
@@ -96,7 +116,7 @@ public class TransactionServiceImpl implements TransactionService{
 
         JSONObject jsonConversionRates = new JSONObject(conversionRates);
 
-        return jsonConversionRates.get("NGN").toString();
+        return new BigDecimal(jsonConversionRates.get("NGN").toString());
     }
 
     private TransactionResponse getTransactionResponseOf(Transaction transaction){
@@ -114,8 +134,8 @@ public class TransactionServiceImpl implements TransactionService{
     }
 
     private TransactionResponse getTransactionResponseWithGainOrLoss(Transaction transaction) throws IOException {
-        String currentUsdValue = getUsdValue();
-        BigDecimal difference = BigDecimal.valueOf(Long.parseLong(currentUsdValue)).subtract(BigDecimal.valueOf(Long.parseLong(transaction.getUsdValue())));
+        BigDecimal currentUsdValue = getUsdValue();
+        BigDecimal difference = currentUsdValue.subtract(new BigDecimal(transaction.getUsdValue()));
 
         TransactionResponse response = TransactionResponse.builder()
                 .id(transaction.getId())
@@ -129,7 +149,7 @@ public class TransactionServiceImpl implements TransactionService{
 
         if(difference.compareTo(BigDecimal.ZERO) > 0){
             response.setGain(difference.toString());
-        } else {
+        } else if(difference.compareTo(BigDecimal.ZERO) < 0) {
             response.setLoss(difference.toString());
         }
 

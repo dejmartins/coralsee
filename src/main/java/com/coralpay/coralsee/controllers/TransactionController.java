@@ -10,10 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
@@ -30,5 +27,14 @@ public class TransactionController {
                 .data(transactionService.createTransaction(request))
                 .build();
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<?> getWeekToDateSummary(@PathVariable("userId") String userId, @RequestParam int number, @RequestParam int size){
+        SuccessResponse response = SuccessResponse.builder()
+                .data(transactionService.getWeekToDateSummary(userId, number, size))
+                .build();
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
