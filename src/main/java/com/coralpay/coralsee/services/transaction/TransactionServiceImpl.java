@@ -27,7 +27,7 @@ import static com.coralpay.coralsee.validators.TransactionValidator.validateCrea
 @RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService{
 
-    @Value("${exchange.rate.apu}")
+    @Value("${exchange.rate.api}")
     private String exhangeRateApi;
     public final ModelMapper mapper;
     public final UserService userService;
