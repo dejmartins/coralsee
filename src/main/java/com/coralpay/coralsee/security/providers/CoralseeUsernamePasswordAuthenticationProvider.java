@@ -11,6 +11,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import static com.coralpay.coralsee.utils.Constants.BAD_CREDENTIALS;
+
 @Component
 @AllArgsConstructor
 public class CoralseeUsernamePasswordAuthenticationProvider implements AuthenticationProvider {
@@ -24,7 +26,7 @@ public class CoralseeUsernamePasswordAuthenticationProvider implements Authentic
         if (isValidPasswordMatch)
             return new UsernamePasswordAuthenticationToken(userDetails.getUsername(), userDetails.getPassword(),
                     userDetails.getAuthorities());
-        throw new BadCredentialsException("Incorrect username or password supplied");
+        throw new BadCredentialsException(BAD_CREDENTIALS);
     }
 
     @Override

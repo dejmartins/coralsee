@@ -9,6 +9,8 @@ import org.springframework.security.core.AuthenticationException;
 
 import java.util.Set;
 
+import static com.coralpay.coralsee.utils.Constants.AUTH_PROVIDER_NOT_FOUND;
+
 @RequiredArgsConstructor
 public class CoralseeAuthenticationManager implements AuthenticationManager {
     private final Set<AuthenticationProvider> providers;
@@ -23,6 +25,6 @@ public class CoralseeAuthenticationManager implements AuthenticationManager {
         return providers.stream()
                 .filter(authenticationProvider -> authenticationProvider.supports(authentication.getClass()))
                 .findAny()
-                .orElseThrow(() -> new ProviderNotFoundException("No authentication provider exists for authentication type"));
+                .orElseThrow(() -> new ProviderNotFoundException(AUTH_PROVIDER_NOT_FOUND));
     }
 }
